@@ -151,6 +151,169 @@ describe('CalculateReleasesToRetain', () => {
       expect(filteredReleases).toEqual([])
     })
   })
+
+  describe('Logs the correct result', () => {
+    it('log the 1st, 2nd, 3rd, 4th, nth result', () => {
+      const releases: Release[] = [
+        {
+          Id: 'Release-1',
+          ProjectId: 'Project-1',
+          Version: '1.0.1',
+          Created: '2000-01-02T13:00:00',
+        },
+        {
+          Id: 'Release-2',
+          ProjectId: 'Project-1',
+          Version: '1.0.1',
+          Created: '2000-01-02T14:00:00',
+        },
+        {
+          Id: 'Release-3',
+          ProjectId: 'Project-1',
+          Version: '1.0.1',
+          Created: '2000-01-02T13:00:00',
+        },
+        {
+          Id: 'Release-4',
+          ProjectId: 'Project-1',
+          Version: '1.0.1',
+          Created: '2000-01-02T13:00:00',
+        },
+        {
+          Id: 'Release-5',
+          ProjectId: 'Project-1',
+          Version: '1.0.1',
+          Created: '2000-01-02T13:00:00',
+        },
+        {
+          Id: 'Release-6',
+          ProjectId: 'Project-1',
+          Version: '1.0.1',
+          Created: '2000-01-02T13:00:00',
+        },
+        {
+          Id: 'Release-7',
+          ProjectId: 'Project-1',
+          Version: '1.0.1',
+          Created: '2000-01-02T13:00:00',
+        },
+        {
+          Id: 'Release-8',
+          ProjectId: 'Project-1',
+          Version: '1.0.1',
+          Created: '2000-01-02T13:00:00',
+        },
+        {
+          Id: 'Release-9',
+          ProjectId: 'Project-1',
+          Version: '1.0.1',
+          Created: '2000-01-02T13:00:00',
+        },
+        {
+          Id: 'Release-10',
+          ProjectId: 'Project-1',
+          Version: '1.0.1',
+          Created: '2000-01-02T13:00:00',
+        },
+        {
+          Id: 'Release-11',
+          ProjectId: 'Project-1',
+          Version: '1.0.1',
+          Created: '2000-01-02T13:00:00',
+        },
+      ]
+
+      const deployments: Deployment[] = [
+        {
+          Id: 'Deployment-1',
+          ReleaseId: 'Release-1',
+          EnvironmentId: 'Environment-1',
+          DeployedAt: '2000-01-01T10:00:00',
+        },
+        {
+          Id: 'Deployment-2',
+          ReleaseId: 'Release-2',
+          EnvironmentId: 'Environment-1',
+          DeployedAt: '2000-01-01T10:00:00',
+        },
+        {
+          Id: 'Deployment-3',
+          ReleaseId: 'Release-3',
+          EnvironmentId: 'Environment-1',
+          DeployedAt: '2000-01-01T10:00:00',
+        },
+        {
+          Id: 'Deployment-4',
+          ReleaseId: 'Release-4',
+          EnvironmentId: 'Environment-1',
+          DeployedAt: '2000-01-01T10:00:00',
+        },
+        {
+          Id: 'Deployment-5',
+          ReleaseId: 'Release-5',
+          EnvironmentId: 'Environment-1',
+          DeployedAt: '2000-01-01T10:00:00',
+        },
+        {
+          Id: 'Deployment-6',
+          ReleaseId: 'Release-6',
+          EnvironmentId: 'Environment-1',
+          DeployedAt: '2000-01-01T10:00:00',
+        },
+        {
+          Id: 'Deployment-7',
+          ReleaseId: 'Release-7',
+          EnvironmentId: 'Environment-1',
+          DeployedAt: '2000-01-01T10:00:00',
+        },
+        {
+          Id: 'Deployment-8',
+          ReleaseId: 'Release-8',
+          EnvironmentId: 'Environment-1',
+          DeployedAt: '2000-01-01T10:00:00',
+        },
+        {
+          Id: 'Deployment-9',
+          ReleaseId: 'Release-9',
+          EnvironmentId: 'Environment-1',
+          DeployedAt: '2000-01-01T10:00:00',
+        },
+        {
+          Id: 'Deployment-10',
+          ReleaseId: 'Release-10',
+          EnvironmentId: 'Environment-1',
+          DeployedAt: '2000-01-01T10:00:00',
+        },
+        {
+          Id: 'Deployment-11',
+          ReleaseId: 'Release-11',
+          EnvironmentId: 'Environment-1',
+          DeployedAt: '2000-01-01T10:00:00',
+        },
+      ]
+
+      const retainedReleases = calculateReleasesToRetain(
+        RETAIN_TEN_RELEASES,
+        releases,
+        deployments,
+        projects,
+        environments
+      )
+      expect(retainedReleases).toEqual([
+        'Release-1',
+        'Release-2',
+        'Release-3',
+        'Release-4',
+        'Release-5',
+        'Release-6',
+        'Release-7',
+        'Release-8',
+        'Release-9',
+        'Release-10',
+      ])
+    })
+  })
+
   describe('CalculateReleasesToRetain', () => {
     it('should calculate release to retain', () => {
       const releases: Release[] = [

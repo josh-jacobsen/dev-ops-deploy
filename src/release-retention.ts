@@ -66,13 +66,28 @@ export const filterReleasesWithNoDeploymentsOrProjects = (
   return releasesWithProjects
 }
 
+const convertIndexToEnglishString = (index: number) => {
+  switch (index) {
+    case 0:
+      return 'most recently'
+    case 1:
+      return index + 1 + 'nd most recently'
+    case 2:
+      return index + 1 + 'rd most recently'
+    case 3:
+      return index + 1 + 'th most recently'
+    default:
+      return index + 1 + 'th most recently'
+  }
+}
+
 export const orderAndFilterReleases = (
   numberOfPastReleaseToRetain: number,
   releasesMap: Map<string, DeployedRelease[]>
 ) => {
   const releasesToActuallyReturn: string[] = []
   releasesMap.forEach((key: DeployedRelease[], value: string) => {
-    const envValue = value.split(':')
+    const environment = value.split(':')
     console.log(
       `For enviroment and project ${value}, the retained releases are:`
     )
@@ -83,7 +98,9 @@ export const orderAndFilterReleases = (
     otherThing.map((release, index) => {
       releasesToActuallyReturn.push(release.Id)
       console.log(
-        `${release.Id} kept becasue it was the ${index} deployed to environment ${envValue[0]} `
+        `${release.Id} kept becasue it was the ${convertIndexToEnglishString(
+          index
+        )} deployed to ${environment[0]} `
       )
     })
   })
