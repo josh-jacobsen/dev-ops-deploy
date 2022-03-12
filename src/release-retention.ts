@@ -30,12 +30,6 @@ export interface DeployedRelease {
   DeployedAt: string
 }
 
-export interface ReleaseRetention {
-  ProjectId: string
-  EnvironmentId: string
-  Releases: DeployedRelease[]
-}
-
 export async function readFile(path: string) {
   const a = await fs.readFile(path, 'utf-8')
   const things: Release[] = JSON.parse(a)
@@ -74,8 +68,6 @@ const convertIndexToEnglishString = (index: number) => {
       return index + 1 + 'nd most recently'
     case 2:
       return index + 1 + 'rd most recently'
-    case 3:
-      return index + 1 + 'th most recently'
     default:
       return index + 1 + 'th most recently'
   }
@@ -83,29 +75,31 @@ const convertIndexToEnglishString = (index: number) => {
 
 export const orderAndFilterReleases = (
   numberOfPastReleaseToRetain: number,
-  releasesMap: Map<string, DeployedRelease[]>
-) => {
-  const releasesToActuallyReturn: string[] = []
-  releasesMap.forEach((key: DeployedRelease[], value: string) => {
-    const environment = value.split(':')
-    console.log(
-      `For enviroment and project ${value}, the retained releases are:`
-    )
-    const sortedArray = key.sort((a, b) => {
-      return Date.parse(b.DeployedAt) - Date.parse(a.DeployedAt)
-    })
-    const otherThing = sortedArray.slice(0, numberOfPastReleaseToRetain)
-    otherThing.map((release, index) => {
-      releasesToActuallyReturn.push(release.Id)
+  releasesMap: Record<string, DeployedRelease[]>
+): string[] => {
+  return Object.entries(releasesMap)
+    .map(([key, value]) => {
+      const environment = key.split(':')
       console.log(
-        `${release.Id} kept becasue it was the ${convertIndexToEnglishString(
-          index
-        )} deployed to ${environment[0]} `
+        `For enviroment and project ${key}, the retained releases are:`
       )
+      return value
+        .sort((a, b) => {
+          return Date.parse(b.DeployedAt) - Date.parse(a.DeployedAt)
+        })
+        .slice(0, numberOfPastReleaseToRetain)
+        .map((release, index) => {
+          console.log(
+            `${
+              release.Id
+            } kept becasue it was the ${convertIndexToEnglishString(
+              index
+            )} deployed to ${environment[0]} `
+          )
+          return release.Id
+        })
     })
-  })
-
-  return releasesToActuallyReturn
+    .flat()
 }
 
 export const calculateReleasesToRetain = (
@@ -121,8 +115,8 @@ export const calculateReleasesToRetain = (
     projects
   )
 
-  // TODO Immutably return a Map within the below function instead of declaring one and then mutating it
-  const releasesMap = new Map<string, DeployedRelease[]>()
+  // TODO Returm a new object built up in the below function instead of declaring one and then mutating it
+  const releasesObject: Record<string, DeployedRelease[]> = {}
   filteredReleases.map((release) => {
     const releaseDeployments = deployments.filter(
       (deploy) => deploy.ReleaseId === release.Id
@@ -139,10 +133,10 @@ export const calculateReleasesToRetain = (
         return []
       }
 
-      // TODO Can I use .reduce here to build the object instead of mutating releasesMap?
-      const existingReleases = releasesMap.get(
-        `${deploy.EnvironmentId}:${release.ProjectId}`
-      )
+      // TODO Use .reduce here to build the object instead of mutating the releases object
+      const existingReleases =
+        releasesObject[`${deploy.EnvironmentId}:${release.ProjectId}`]
+
       if (existingReleases) {
         existingReleases.push({
           Id: release.Id,
@@ -150,20 +144,18 @@ export const calculateReleasesToRetain = (
           DeployedAt: deploy.DeployedAt,
         })
       } else {
-        releasesMap.set(`${deploy.EnvironmentId}:${release.ProjectId}`, [
+        releasesObject[`${deploy.EnvironmentId}:${release.ProjectId}`] = [
           {
             Id: release.Id,
             Version: release.Version,
             DeployedAt: deploy.DeployedAt,
           },
-        ])
+        ]
       }
     })
   })
 
-  // TODO Using Sets is going to improve the access speed
-
   // I'm assuming that for the instruction to "Return the releases that should be kept", the Release Id is the only detail that needs
   // to be returned (if this assumption is incorrect it is easy enough to change)
-  return orderAndFilterReleases(numberOfPastReleaseToRetain, releasesMap)
+  return orderAndFilterReleases(numberOfPastReleaseToRetain, releasesObject)
 }
