@@ -7,6 +7,11 @@ export interface Release {
   Created?: string | null
 }
 
+export interface Environment {
+  Id: string
+  Name: string
+}
+
 export interface Deployment {
   Id: string
   ReleaseId: string
@@ -31,25 +36,28 @@ export interface ReleaseRetention {
   Releases: DeployedRelease[]
 }
 
-
 export async function readFile(path: string) {
   const a = await fs.readFile(path, 'utf-8')
   const things: Release[] = JSON.parse(a)
   console.log(things)
 }
 
-export function filterReleasesWithNoDeploymentsOrProjects(releases: Release[], deployments: Deployment[], projects: Project[]) {
-  const releasesWithDeployments = releases.filter(release => {
-    if (deployments.some(deployment => deployment.ReleaseId === release.Id)){
+export const filterReleasesWithNoDeploymentsOrProjects = (
+  releases: Release[],
+  deployments: Deployment[],
+  projects: Project[]
+): Release[] => {
+  const releasesWithDeployments = releases.filter((release) => {
+    if (deployments.some((deployment) => deployment.ReleaseId === release.Id)) {
       return true
     }
     return false
   })
 
-  // I'm assuming that if a release is associated with a Project that isn't in the Projects.json file, 
+  // I'm assuming that if a release is associated with a Project that isn't in the Projects.json file,
   // then this release should be excluded from the results.
-  const releasesWithProjects = releasesWithDeployments.filter(release => {
-    if (projects.some(project => project.Id === release.ProjectId)) {
+  const releasesWithProjects = releasesWithDeployments.filter((release) => {
+    if (projects.some((project) => project.Id === release.ProjectId)) {
       return true
     }
     return false
@@ -58,29 +66,87 @@ export function filterReleasesWithNoDeploymentsOrProjects(releases: Release[], d
   return releasesWithProjects
 }
 
-export function calculateReleasesToRetain(releases: Release[], deployments: Deployment[], projects: Project[]): ReleaseRetention[] {
-  const filteredReleases = filterReleasesWithNoDeploymentsOrProjects(releases, deployments, projects)
+export const orderAndFilterReleases = (
+  numberOfPastReleaseToRetain: number,
+  releasesMap: Map<string, DeployedRelease[]>
+) => {
+  const releasesToActuallyReturn: string[] = []
+  releasesMap.forEach((key: DeployedRelease[], value: string) => {
+    const envValue = value.split(':')
+    console.log(
+      `For enviroment and project ${value}, the retained releases are:`
+    )
+    const sortedArray = key.sort((a, b) => {
+      return Date.parse(b.DeployedAt) - Date.parse(a.DeployedAt)
+    })
+    const otherThing = sortedArray.slice(0, numberOfPastReleaseToRetain)
+    otherThing.map((release, index) => {
+      releasesToActuallyReturn.push(release.Id)
+      console.log(
+        `${release.Id} kept becasue it was the ${index} deployed to environment ${envValue[0]} `
+      )
+    })
+  })
 
-  const releaseRetentionsToReturn: ReleaseRetention[] = []
+  return releasesToActuallyReturn
+}
 
-  filteredReleases.map(release => {
-    const deploymentsToLookAt = deployments.filter(deploy => deploy.ReleaseId === release.Id)
+export const calculateReleasesToRetain = (
+  numberOfPastReleaseToRetain: number,
+  releases: Release[],
+  deployments: Deployment[],
+  projects: Project[],
+  environments: Environment[]
+): string[] => {
+  const filteredReleases = filterReleasesWithNoDeploymentsOrProjects(
+    releases,
+    deployments,
+    projects
+  )
 
-    deploymentsToLookAt.map(deploy => {
-      const check = releaseRetentionsToReturn.find(thing => thing.EnvironmentId === deploy.EnvironmentId && thing.ProjectId === release.ProjectId)
-      if (check) {
-        check.Releases.push({Id: release.Id, Version: release.Version, DeployedAt: deploy.DeployedAt})
+  // TODO Immutably return a Map within the below function instead of declaring one and then mutating it
+  const releasesMap = new Map<string, DeployedRelease[]>()
+  filteredReleases.map((release) => {
+    const releaseDeployments = deployments.filter(
+      (deploy) => deploy.ReleaseId === release.Id
+    )
+
+    releaseDeployments.flatMap((deploy) => {
+      // I'm assuming that if a deployment was to an enviroment that isn't
+      // in the Environments list then it should be filtered out
+      if (
+        !environments.some(
+          (environment) => environment.Id === deploy.EnvironmentId
+        )
+      ) {
+        return []
+      }
+
+      // TODO Can I use .reduce here to build the object instead of mutating releasesMap?
+      const existingReleases = releasesMap.get(
+        `${deploy.EnvironmentId}:${release.ProjectId}`
+      )
+      if (existingReleases) {
+        existingReleases.push({
+          Id: release.Id,
+          Version: release.Version,
+          DeployedAt: deploy.DeployedAt,
+        })
       } else {
-        releaseRetentionsToReturn.push({EnvironmentId: deploy.EnvironmentId, ProjectId: release.ProjectId, Releases: [{Id: release.Id, Version: release.Version, DeployedAt: deploy.DeployedAt}]})
+        releasesMap.set(`${deploy.EnvironmentId}:${release.ProjectId}`, [
+          {
+            Id: release.Id,
+            Version: release.Version,
+            DeployedAt: deploy.DeployedAt,
+          },
+        ])
       }
     })
   })
 
+  // TODO Using Sets is going to improve the access speed
 
-
-  // iterate through the releases. 
-  // compare to Deployments.json
-  // generate new object 
-  // ReleaseRetention []
-  return releaseRetentionsToReturn
+  // I'm assuming that for the instruction to "Return the releases that should be kept", the Release Id is the only detail that needs
+  // to be returned (if this assumption is incorrect it is easy enough to change)
+  return orderAndFilterReleases(numberOfPastReleaseToRetain, releasesMap)
 }
