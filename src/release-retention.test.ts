@@ -300,16 +300,66 @@ describe('CalculateReleasesToRetain', () => {
         environments
       )
       expect(retainedReleases).toEqual([
-        'Release-1',
-        'Release-2',
-        'Release-3',
-        'Release-4',
-        'Release-5',
-        'Release-6',
-        'Release-7',
-        'Release-8',
-        'Release-9',
-        'Release-10',
+        {
+          Created: '2000-01-02T13:00:00',
+          Id: 'Release-1',
+          ProjectId: 'Project-1',
+          Version: '1.0.1',
+        },
+        {
+          Created: '2000-01-02T14:00:00',
+          Id: 'Release-2',
+          ProjectId: 'Project-1',
+          Version: '1.0.1',
+        },
+        {
+          Created: '2000-01-02T13:00:00',
+          Id: 'Release-3',
+          ProjectId: 'Project-1',
+          Version: '1.0.1',
+        },
+        {
+          Created: '2000-01-02T13:00:00',
+          Id: 'Release-4',
+          ProjectId: 'Project-1',
+          Version: '1.0.1',
+        },
+        {
+          Created: '2000-01-02T13:00:00',
+          Id: 'Release-5',
+          ProjectId: 'Project-1',
+          Version: '1.0.1',
+        },
+        {
+          Created: '2000-01-02T13:00:00',
+          Id: 'Release-6',
+          ProjectId: 'Project-1',
+          Version: '1.0.1',
+        },
+        {
+          Created: '2000-01-02T13:00:00',
+          Id: 'Release-7',
+          ProjectId: 'Project-1',
+          Version: '1.0.1',
+        },
+        {
+          Created: '2000-01-02T13:00:00',
+          Id: 'Release-8',
+          ProjectId: 'Project-1',
+          Version: '1.0.1',
+        },
+        {
+          Created: '2000-01-02T13:00:00',
+          Id: 'Release-9',
+          ProjectId: 'Project-1',
+          Version: '1.0.1',
+        },
+        {
+          Created: '2000-01-02T13:00:00',
+          Id: 'Release-10',
+          ProjectId: 'Project-1',
+          Version: '1.0.1',
+        },
       ])
     })
   })
@@ -340,7 +390,14 @@ describe('CalculateReleasesToRetain', () => {
         projects,
         environments
       )
-      expect(retainedReleases).toEqual(['Release-3'])
+      expect(retainedReleases).toEqual([
+        {
+          Created: '2000-01-02T13:00:00',
+          Id: 'Release-3',
+          ProjectId: 'Project-1',
+          Version: '1.0.1',
+        },
+      ])
     })
 
     it('should return multiple releases for the same project and environment combination', () => {
@@ -380,7 +437,20 @@ describe('CalculateReleasesToRetain', () => {
         projects,
         environments
       )
-      expect(retainedReleases).toEqual(['Release-4', 'Release-3'])
+      expect(retainedReleases).toEqual([
+        {
+          Created: '2000-01-03T10:00:00',
+          Id: 'Release-4',
+          ProjectId: 'Project-1',
+          Version: '1.0.2',
+        },
+        {
+          Created: '2000-01-02T13:00:00',
+          Id: 'Release-3',
+          ProjectId: 'Project-1',
+          Version: '1.0.1',
+        },
+      ])
     })
 
     it('should return multiple releases when there are different project and environment combinations', () => {
@@ -420,7 +490,20 @@ describe('CalculateReleasesToRetain', () => {
         projects,
         environments
       )
-      expect(retainedReleases).toEqual(['Release-3', 'Release-4'])
+      expect(retainedReleases).toEqual([
+        {
+          Created: '2000-01-02T13:00:00',
+          Id: 'Release-3',
+          ProjectId: 'Project-1',
+          Version: '1.0.1',
+        },
+        {
+          Created: '2000-01-03T10:00:00',
+          Id: 'Release-4',
+          ProjectId: 'Project-1',
+          Version: '1.0.2',
+        },
+      ])
     })
 
     it('filters out releases that have no corresponding environment', () => {

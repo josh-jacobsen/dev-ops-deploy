@@ -30,6 +30,10 @@ export interface DeployedRelease {
   DeployedAt: string
 }
 
+const isRelease = (release: Release | undefined): release is Release => {
+  return Boolean(release)
+}
+
 export async function readFile(path: string) {
   const a = await fs.readFile(path, 'utf-8')
   const things: Release[] = JSON.parse(a)
@@ -108,7 +112,7 @@ export const calculateReleasesToRetain = (
   deployments: Deployment[],
   projects: Project[],
   environments: Environment[]
-): string[] => {
+): Release[] => {
   const filteredReleases = filterReleasesWithNoDeploymentsOrProjects(
     releases,
     deployments,
@@ -155,7 +159,16 @@ export const calculateReleasesToRetain = (
     })
   })
 
-  // I'm assuming that for the instruction to "Return the releases that should be kept", the Release Id is the only detail that needs
-  // to be returned (if this assumption is incorrect it is easy enough to change)
-  return orderAndFilterReleases(numberOfPastReleaseToRetain, releasesObject)
+  const releaseMap = new Map(releases.map((release) => [release.Id, release]))
+
+  const releaseIds = orderAndFilterReleases(
+    numberOfPastReleaseToRetain,
+    releasesObject
+  )
+
+  return releaseIds
+    .map((releaseId) => {
+      return releaseMap.get(releaseId)
+    })
+    .filter(isRelease)
 }
