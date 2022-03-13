@@ -35,9 +35,7 @@ const isRelease = (release: Release | undefined): release is Release => {
 }
 
 export async function readFile(path: string) {
-  const a = await fs.readFile(path, 'utf-8')
-  const things: Release[] = JSON.parse(a)
-  console.log(things)
+  return await fs.readFile(path, 'utf-8')
 }
 
 export const filterReleasesWithNoDeploymentsOrProjects = (
@@ -77,7 +75,16 @@ const convertIndexToEnglishString = (index: number) => {
   }
 }
 
-export const orderAndFilterReleases = (
+const createDeploymentMap = (deployments: Deployment[]) => {
+  return deployments.reduce((group, deployment) => {
+    const { ReleaseId } = deployment
+    group[ReleaseId] = group[ReleaseId] ?? []
+    group[ReleaseId].push(deployment)
+    return group
+  }, {} as Record<string, Deployment[]>)
+}
+
+const orderAndFilterReleases = (
   numberOfPastReleaseToRetain: number,
   releasesMap: Record<string, DeployedRelease[]>
 ): string[] => {
@@ -119,12 +126,12 @@ export const calculateReleasesToRetain = (
     projects
   )
 
-  // TODO Returm a new object built up in the below function instead of declaring one and then mutating it
-  const releasesObject: Record<string, DeployedRelease[]> = {}
+  const deploymentMap = createDeploymentMap(deployments)
+
+  // TODO Use .reduce here to build the object instead of mutating the releases object (depending on how readable it is)
+  const releasesToRetain: Record<string, DeployedRelease[]> = {}
   filteredReleases.map((release) => {
-    const releaseDeployments = deployments.filter(
-      (deploy) => deploy.ReleaseId === release.Id
-    )
+    const releaseDeployments = deploymentMap[release.Id]
 
     releaseDeployments.flatMap((deploy) => {
       // I'm assuming that if a deployment was to an enviroment that isn't
@@ -137,9 +144,8 @@ export const calculateReleasesToRetain = (
         return []
       }
 
-      // TODO Use .reduce here to build the object instead of mutating the releases object
       const existingReleases =
-        releasesObject[`${deploy.EnvironmentId}:${release.ProjectId}`]
+        releasesToRetain[`${deploy.EnvironmentId}:${release.ProjectId}`]
 
       if (existingReleases) {
         existingReleases.push({
@@ -148,7 +154,7 @@ export const calculateReleasesToRetain = (
           DeployedAt: deploy.DeployedAt,
         })
       } else {
-        releasesObject[`${deploy.EnvironmentId}:${release.ProjectId}`] = [
+        releasesToRetain[`${deploy.EnvironmentId}:${release.ProjectId}`] = [
           {
             Id: release.Id,
             Version: release.Version,
@@ -163,7 +169,7 @@ export const calculateReleasesToRetain = (
 
   const releaseIds = orderAndFilterReleases(
     numberOfPastReleaseToRetain,
-    releasesObject
+    releasesToRetain
   )
 
   return releaseIds
@@ -171,4 +177,16 @@ export const calculateReleasesToRetain = (
       return releaseMap.get(releaseId)
     })
     .filter(isRelease)
+}
+
+async function run() {
+  const releases: Release[] = JSON.parse(await readFile('data/Releases.json'))
+  const deployments: Deployment[] = JSON.parse(
+    await readFile('data/Deployments.json')
+  )
+  const projects: Project[] = JSON.parse(await readFile('data/Projects.json'))
+  const environments: Environment[] = JSON.parse(
+    await readFile('data/Environments.json')
+  )
+  calculateReleasesToRetain(10, releases, deployments, projects, environments)
 }
