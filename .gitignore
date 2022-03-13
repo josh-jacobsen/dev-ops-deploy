@@ -20,7 +20,6 @@
 # Private Node Modules
 node_modules/
 dist/
-data/
 creds.js
  
 # Private Files

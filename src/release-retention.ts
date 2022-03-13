@@ -190,3 +190,5 @@ async function run() {
   )
   calculateReleasesToRetain(10, releases, deployments, projects, environments)
 }
+
+run()
