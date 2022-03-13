@@ -1,4 +1,4 @@
-import * as fs from 'fs/promises'
+import * as fs from 'fs'
 
 export interface Release {
   Id: string
@@ -34,8 +34,8 @@ const isRelease = (release: Release | undefined): release is Release => {
   return Boolean(release)
 }
 
-export async function readFile(path: string) {
-  return await fs.readFile(path, 'utf-8')
+function readFile(path: string) {
+  return fs.readFileSync(path, 'utf-8')
 }
 
 export const filterReleasesWithNoDeploymentsOrProjects = (
@@ -179,16 +179,23 @@ export const calculateReleasesToRetain = (
     .filter(isRelease)
 }
 
-async function run() {
-  const releases: Release[] = JSON.parse(await readFile('data/Releases.json'))
+function run() {
+  const NUMBER_OF_RELEASES_TO_RETAIN = 10
+  const releases: Release[] = JSON.parse(readFile('data/Releases.json'))
   const deployments: Deployment[] = JSON.parse(
-    await readFile('data/Deployments.json')
+    readFile('data/Deployments.json')
   )
-  const projects: Project[] = JSON.parse(await readFile('data/Projects.json'))
+  const projects: Project[] = JSON.parse(readFile('data/Projects.json'))
   const environments: Environment[] = JSON.parse(
-    await readFile('data/Environments.json')
+    readFile('data/Environments.json')
   )
-  calculateReleasesToRetain(10, releases, deployments, projects, environments)
+  calculateReleasesToRetain(
+    NUMBER_OF_RELEASES_TO_RETAIN,
+    releases,
+    deployments,
+    projects,
+    environments
+  )
 }
 
 run()
