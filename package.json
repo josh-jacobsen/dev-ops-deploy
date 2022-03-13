@@ -7,7 +7,8 @@
     "build": "yarn tsc --build",
     "start": "yarn build && node dist/release-retention.js",
     "lint": "eslint --ext ts,tsx src/*",
-    "watch": "ts-node-dev --respawn -- src/release-retention.ts"
+    "watch": "ts-node-dev --respawn -- src/release-retention.ts",
+    "test": "yarn jest"
   },
   "devDependencies": {
     "@types/jest": "^27.4.1",
