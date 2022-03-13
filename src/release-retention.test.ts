@@ -506,6 +506,59 @@ describe('CalculateReleasesToRetain', () => {
       ])
     })
 
+    it('should order releases by deployment date', () => {
+      const releases: Release[] = [
+        {
+          Id: 'Release-3',
+          ProjectId: 'Project-1',
+          Version: '1.0.1',
+          Created: '2000-01-02T13:00:00',
+        },
+        {
+          Id: 'Release-4',
+          ProjectId: 'Project-1',
+          Version: '1.0.2',
+          Created: '2000-01-02T11:00:00',
+        },
+      ]
+
+      const deployments: Deployment[] = [
+        {
+          Id: 'Deployment-1',
+          ReleaseId: 'Release-3',
+          EnvironmentId: 'Environment-1',
+          DeployedAt: '2000-01-01T10:00:00',
+        },
+        {
+          Id: 'Deployment-2',
+          ReleaseId: 'Release-4',
+          EnvironmentId: 'Environment-1',
+          DeployedAt: '2000-01-01T13:00:00',
+        },
+      ]
+      const retainedReleases = calculateReleasesToRetain(
+        RETAIN_TEN_RELEASES,
+        releases,
+        deployments,
+        projects,
+        environments
+      )
+      expect(retainedReleases).toEqual([
+        {
+          Created: '2000-01-02T11:00:00',
+          Id: 'Release-4',
+          ProjectId: 'Project-1',
+          Version: '1.0.2',
+        },
+        {
+          Created: '2000-01-02T13:00:00',
+          Id: 'Release-3',
+          ProjectId: 'Project-1',
+          Version: '1.0.1',
+        },
+      ])
+    })
+
     it('filters out releases that have no corresponding environment', () => {
       const environments: Environment[] = [
         {
