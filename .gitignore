@@ -7,7 +7,9 @@
 *.code-workspace
 # Local History for Visual Studio Code
 .history/
- 
+
+.idea/
+
 # Common credential files
 **/credentials.json
 **/client_secrets.json
@@ -16,20 +18,19 @@
 *.dat
 *password*
 *.httr-oauth*
- 
+
 # Private Node Modules
 node_modules/
 dist/
 creds.js
- 
+
 # Private Files
 *.csv
 *.csv.gz
 *.tsv
 *.tsv.gz
 *.xlsx
- 
- 
+
+
 # Mac/OSX
 .DS_Store
- 
