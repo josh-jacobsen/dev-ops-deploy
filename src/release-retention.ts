@@ -1,9 +1,9 @@
 import { DeployedRelease, Deployment, Environment, Project, Release } from './interfaces'
 import {
+    convertIndexToEnglishString,
     createDeploymentMap,
     filterReleasesWithNoDeploymentsOrProjects,
     isRelease,
-    orderAndFilterReleases
 } from './helpers'
 import { readFileSync } from 'fs'
 
@@ -23,6 +23,7 @@ export const calculateReleasesToRetain = (
     const deploymentMap = createDeploymentMap(deployments)
 
     const releasesToRetain: Record<string, DeployedRelease[]> = {}
+
     filteredReleases.map((release) => {
         const releaseDeployments = deploymentMap[release.Id]
 
@@ -58,18 +59,46 @@ export const calculateReleasesToRetain = (
         })
     })
 
-    const releaseMap = new Map(releases.map((release) => [release.Id, release]))
-
     const releaseIds = orderAndFilterReleases(
         numberOfPastReleaseToRetain,
         releasesToRetain
     )
 
+    const releaseMap = new Map(releases.map((release) => [release.Id, release]))
+    
     return releaseIds
         .map((releaseId) => {
             return releaseMap.get(releaseId)
         })
         .filter(isRelease)
+}
+
+export function orderAndFilterReleases(
+    numberOfPastReleaseToRetain: number,
+    releasesMap: Record<string, DeployedRelease[]>
+): string[] {
+    return Object.entries(releasesMap)
+        .flatMap(([key, value]) => {
+            const environment = key.split(':')
+            console.log(
+                `For environment and project ${key}, the retained releases are:`
+            )
+            return value
+                .sort((a, b) => {
+                    return Date.parse(b.DeployedAt) - Date.parse(a.DeployedAt)
+                })
+                .slice(0, numberOfPastReleaseToRetain)
+                .map((release, index) => {
+                    console.log(
+                        `${
+                            release.Id
+                        } kept because it was the ${convertIndexToEnglishString(
+                            index
+                        )} deployed to ${environment[0]} `
+                    )
+                    return release.Id
+                })
+        })
 }
 
 function run() {
@@ -92,4 +121,3 @@ function run() {
 }
 
 run()
-
