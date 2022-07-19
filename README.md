@@ -1,5 +1,8 @@
 # Dev Ops Deploy Release Retention
 
+This was a technical test I was asked to complete for a role with a Cloud infrastructure company 
+
+
 ### Running the solution
 
 Run `yarn install` to download the necessary NPM packages, and then use the following commands:
